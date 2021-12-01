@@ -1,5 +1,7 @@
 import os
 import matplotlib.pyplot as plt
+import argparse
+from tqdm import tqdm
 from model import *
 from utility import *
 
@@ -7,104 +9,35 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 torch.cuda.empty_cache()
 
-# # Pre-trained Age Predictor를 불러와서 freezing 시키기
-# SFCN = age_regression.SFCN()
-# # SFCN = torch.nn.DataParallel(SFCN)
-# saved_path = "/DataCommon2/mjy/AgePredictor/Regression/SFCN_SGD/SFCN_MAE_2.780_r2_0.784.pt"
-# SFCN.load_state_dict(torch.load(saved_path))
-# SFCN.cuda()
-#
-# for param in SFCN.parameters():
-#     param.requires_grad_(False)
 
+parser = argparse.ArgumentParser()
 
-backbone = Backbone_encoder().cuda()
-# backbone = torch.nn.DataParallel(backbone)
-# backbone.cuda()
+parser.add_argument('--batch_size', type=int, default=64)
+parser.add_argument('--epoch', type=int, default=300)
+# parser.add_argument('--d_iter', type=int, default=1)
+# parser.add_argument('--g_iter', type=int, default=2)
 
-# SFCN = SFCN().cuda()
+args = parser.parse_args()
 
-# Initialize Generator and Discriminator
 
 discriminator = Discriminator().cuda()
-generator = Generator().cuda()
+generator = ViT_UNet().cuda()
 
-
-final_7590 = pd.read_csv('/DataCommon2/mjy/data/UK_Biobank/final_7590.csv')
-
-### Arguments
-
-
-"""
-Making directory
-"""
-
-def createFolder(directory):
-    try:
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-    except OSError:
-        print('Error: Creating directory. ' + directory)
-
-
-
-
-
-
-"""
-Images for test
-"""
-MRI0 = nib.load("/DataCommon2/mjy/data/UK_Biobank/validation_data_eid_3947347/3947347_20252_2_0.nii").get_fdata()
-MRI2 = nib.load("/DataCommon2/mjy/data/UK_Biobank/validation_data_eid_3947347/3947347_20252_3_0.nii").get_fdata()
-MRI0 = MRI0[:,:,91]
-MRI0 = np.rot90(MRI0)
-MRI2 = MRI2[:,:,91]
-MRI2 = np.rot90(MRI2)
-# Gaussian Norm
-# MRI2 = (MRI2 - np.mean(MRI2)) / np.std(MRI2)
-# Min/Max Norm
-MRI02 = (MRI2 - MRI2.min()) / (MRI2.max() - MRI2.min())
-
-# Gaussian Norm
-# MRI0 = (MRI0 - np.mean(MRI0)) / np.std(MRI0)
-# Min/Max Norm
-MRI00 = (MRI0 - MRI0.min()) / (MRI0.max() - MRI0.min())
-
-
-w, d = MRI00.shape
-MRI0 = torch.from_numpy(MRI00).float().view(1, 1, w, d)
-
-MRI_1 = torch.cat((MRI0, MRI0, MRI0, MRI0, MRI0, MRI0, MRI0, MRI0, MRI0), 0)
-MRI_11 = torch.cat((MRI_1, MRI_1, MRI_1, MRI_1, MRI_1, MRI_1, MRI_1, MRI0), 0)
-
-age_8 = torch.tensor([24], device='cuda:0', dtype=torch.int32)
-age_6 = torch.tensor([26], device='cuda:0', dtype=torch.int32)
-age_4 = torch.tensor([28], device='cuda:0', dtype=torch.int32)
-age_2 = torch.tensor([30], device='cuda:0', dtype=torch.int32)
-age0 = torch.tensor([32], device='cuda:0', dtype=torch.int32)
-age2 = torch.tensor([34], device='cuda:0', dtype=torch.int32)
-age4 = torch.tensor([36], device='cuda:0', dtype=torch.int32)
-age6 = torch.tensor([38], device='cuda:0', dtype=torch.int32)
-age8 = torch.tensor([40], device='cuda:0', dtype=torch.int32)
-
-age_1 = torch.cat((age_8, age_6, age_4, age_2, age0, age2, age4, age6, age8), 0)
-age_11 = torch.cat((age_1, age_1, age_1, age_1, age_1, age_1, age_1, age8))
 
 
 def main():
 
-    Real_dataset = Realdata(csv_root="/DataCommon2/mjy/data/UK_Biobank/final_7590.csv", index=final_7590['index'].values)
-    Real_dataloader = DataLoader(Real_dataset, batch_size=args.batch_size, shuffle=True, drop_last=True)
+    batch_size, epoch = args.batch_size, args.epoch
 
-    Input_dataset = Inputdata(csv_root="/DataCommon2/mjy/data/UK_Biobank/final_7590.csv", index=final_7590['index'].values)
-    Input_dataloader = DataLoader(Input_dataset, batch_size=args.batch_size, shuffle=True, drop_last=True)
+    Cartoon_loader = DataLoader(Cartoon_data, batch_size=batch_size, shuffle=True, drop_last=True)
+    CelebA_loader = DataLoader(CelebA_data, batch_size=batch_size, shuffle=True, drop_last=True)
 
     ####### Loss functions
     adversarial_loss = torch.nn.MSELoss().cuda()
     # classificiation_loss = torch.nn.NLLLoss().cuda()
-    classificiation_loss = torch.nn.CrossEntropyLoss().cuda()
+    # classificiation_loss = torch.nn.CrossEntropyLoss().cuda()
     # identity_loss = torch.nn.L1Loss().cuda()
-    Age_Prediction_loss = nn.MSELoss().cuda()
+    # Age_Prediction_loss = nn.MSELoss().cuda()
 
 
 
@@ -121,7 +54,7 @@ def main():
     generator.train()
 
 
-    batch_size, epoch = args.batch_size, args.epoch
+
     # for epoch in tqdm(range(0, epoch), desc='Epoch'):
     for epoch in range(epoch):
 
@@ -133,7 +66,7 @@ def main():
         Accuracy = 0
         MAE = 0
 
-        for batch, (input_data, target_data) in tqdm(enumerate(zip(Input_dataloader, Real_dataloader)), total=len(Input_dataloader)):
+        for batch, (input_data, target_data) in tqdm(enumerate(zip(Cartoon_loader, CelebA_loader)), total=len(Cartoon_loader)):
 
             input_img, input_age = input_data
             real_img, target_age = target_data

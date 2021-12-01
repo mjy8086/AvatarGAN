@@ -353,10 +353,10 @@ class ViT_UNet(nn.Module):
         self.convup3 = CNNencoder_gn(32, 32)
         self.concat4 = Concat_gn(64, 16)
         self.convup4 = CNNencoder_gn(16, 16)
-        self.concat5 = Concat_ln(32, 23)
-        self.convup5 = CNNencoder_ln(23, 23)
+        self.concat5 = Concat_ln(32, 3)
+        self.convup5 = CNNencoder_ln(3, 3)
 
-        self.Segmentation_head = nn.Conv2d(23, 23, kernel_size=1, stride=1, bias=False)
+        # self.Segmentation_head = nn.Conv2d(23, 23, kernel_size=1, stride=1, bias=False)
 
 
     def forward(self, x):
@@ -409,9 +409,9 @@ class ViT_UNet(nn.Module):
         u4 = self.upsample(u4)
         # (B, 16, 256, 256)
         u5 = self.concat5(u4, c1)
-        u5 = self.convup5(u5)
+        out = self.convup5(u5)
         # (B, 23, 256, 256)
-        out = self.Segmentation_head(u5)
+        # out = self.Segmentation_head(u5)
         # (B, 23, 256, 256)
 
         return out
@@ -431,19 +431,19 @@ class Discriminator(nn.Module):
         self.pooling = nn.MaxPool2d(kernel_size=2)
 
         self.conv1_1 = CNNencoder_gn(in_channels, 16)
-        self.conv1_2 = CNNencoder_drop(16, 16)
+        self.conv1_2 = CNNencoder_gn_drop(16, 16)
         # (B, nf, 193, 227, 193)
         self.conv2_1 = CNNencoder_gn(16, 16*2)
-        self.conv2_2 = CNNencoder_drop(16*2, 16*2)
+        self.conv2_2 = CNNencoder_gn_drop(16*2, 16*2)
         # (B, nf*2, 96, 113, 96)
         self.conv3_1 = CNNencoder_gn(16*2, 16*4)
-        self.conv3_2 = CNNencoder_drop(16*4, 16*4)
+        self.conv3_2 = CNNencoder_gn_drop(16*4, 16*4)
         # (B, nf*4, 48, 56, 48)
         self.conv4_1 = CNNencoder_gn(16*4, 16*8)
-        self.conv4_2 = CNNencoder_drop(16*8, 16*8)
+        self.conv4_2 = CNNencoder_gn_drop(16*8, 16*8)
         # (B, nf*8, 24, 28, 24)
         self.conv5_1 = CNNencoder_gn(16*8, 16*16)
-        self.conv5_2 = CNNencoder_drop(16*16, 16*16)
+        self.conv5_2 = CNNencoder_gn_drop(16*16, 16*16)
 
         self.realfake = nn.Linear(16*16*7*6, 1)
         # self.condition = nn.Linear(16*16*3*4*3, 38)
@@ -455,31 +455,31 @@ class Discriminator(nn.Module):
 
     def forward(self, x):
         c1 = self.conv1_1(x)
-        # (B, nf, 218, 182)
+        # (B, nf, 256, 256)
         c1 = self.conv1_2(c1)
-        # (B, nf, 109, 91)
+        # (B, nf, 256, 256)
 
         c2 = self.conv2_1(c1)
-        # (B, nf*2, 109, 91)
+        # (B, nf*2, 256, 256)
         c2 = self.conv2_2(c2)
-        # (B, nf*2, 55, 46)
+        # (B, nf*2, 128, 128)
 
         c3 = self.conv3_1(c2)
-        # (B, nf*4, 55, 46)
+        # (B, nf*4, 128, 128)
         c3 = self.conv3_2(c3)
-        # (B, nf*4, 28, 23)
+        # (B, nf*4, 64, 64)
 
         c4 = self.conv4_1(c3)
-        # (B, nf*8, 28, 23)
+        # (B, nf*8, 64, 64)
         c4 = self.conv4_2(c4)
-        # (B, nf*8, 14, 12)
+        # (B, nf*8, 32, 32)
 
         c5 = self.conv5_1(c4)
-        # (B, nf*8, 14, 12)
+        # (B, nf*8, 32, 32)
         c5 = self.conv5_2(c5)
-        # (B, nf*16, 7, 6)
+        # (B, nf*16, 16, 16)
 
-        m = c5.view(-1, 16*16*7*6)
+        m = c5.view(-1, 16*16*16*16)
         # (B, 9216)
         # rf = self.sig(self.realfake(m))
         # c = self.soft(self.condition(m))

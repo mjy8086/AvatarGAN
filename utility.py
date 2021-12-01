@@ -85,7 +85,7 @@ Cartoon_data = Cartoon_Dataset(Cartoon_path, Cartoon, Resize)
 CelebA_data = CelebA_Dataset(CelebA_path, CelebA)
 
 # dataloader
-batch_size = 32
+# batch_size = 32
 
-Cartoon_loader = DataLoader(Cartoon_data, batch_size=batch_size, shuffle=True, drop_last=True)
-CelebA_loader = DataLoader(CelebA_data, batch_size=batch_size, shuffle=True, drop_last=True)
+# Cartoon_loader = DataLoader(Cartoon_data, batch_size=batch_size, shuffle=True, drop_last=True)
+# CelebA_loader = DataLoader(CelebA_data, batch_size=batch_size, shuffle=True, drop_last=True)
