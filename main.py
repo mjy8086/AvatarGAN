@@ -1,11 +1,34 @@
 import os
 import matplotlib.pyplot as plt
 import argparse
+import torch
+from torch import nn
+from torch import Tensor
+from torch.nn.modules.module import Module
+import torch.nn.functional as F
+from torch.nn import Dropout, Softmax, Linear, Conv3d, LayerNorm, Flatten, Conv2d
+import torchvision
+from torchvision import transforms, models
+import math
+import copy
+from torch import autograd
+from torch.autograd import Variable
+from torch.utils.data import Dataset
+from torch.utils.data import DataLoader
+import numpy as np
+from tqdm import tqdm
+from itertools import cycle
+import pandas as pd
+from sklearn.model_selection import train_test_split
+import cv2
+from scipy.ndimage.filters import gaussian_filter
+from scipy.stats import norm
+
 from tqdm import tqdm
 from model import *
 from utility import *
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 torch.cuda.empty_cache()
 
@@ -29,14 +52,17 @@ def main():
 
     batch_size, epoch = args.batch_size, args.epoch
 
-    Cartoon_loader = DataLoader(Cartoon_data, batch_size=batch_size, shuffle=True, drop_last=True)
-    CelebA_loader = DataLoader(CelebA_data, batch_size=batch_size, shuffle=True, drop_last=True)
+    Cartoon_input_loader = DataLoader(Cartoon_data_input, batch_size=batch_size, shuffle=True, drop_last=True)
+    Cartoon_target_loader = DataLoader(Cartoon_data_target, batch_size=batch_size, shuffle=True, drop_last=True)
+
+    CelebA_input_loader = DataLoader(CelebA_data_input, batch_size=batch_size, shuffle=True, drop_last=True)
+    CelebA_target_loader = DataLoader(CelebA_data_target, batch_size=batch_size, shuffle=True, drop_last=True)
 
     ####### Loss functions
     adversarial_loss = torch.nn.MSELoss().cuda()
     # classificiation_loss = torch.nn.NLLLoss().cuda()
     # classificiation_loss = torch.nn.CrossEntropyLoss().cuda()
-    # identity_loss = torch.nn.L1Loss().cuda()
+    identity_loss = torch.nn.L1Loss().cuda()
     # Age_Prediction_loss = nn.MSELoss().cuda()
 
 
@@ -60,65 +86,55 @@ def main():
 
         print('Epoch {}/{}'.format(epoch, args.epoch))
 
-        D_loss = 0
-        G_loss = 0
-        A_loss = 0
-        Accuracy = 0
-        MAE = 0
+        Cartoon_D_loss = 0
+        Cartoon_G_loss = 0
+        CelebA_D_loss = 0
+        CelebA_G_loss = 0
 
-        for batch, (input_data, target_data) in tqdm(enumerate(zip(Cartoon_loader, CelebA_loader)), total=len(Cartoon_loader)):
+        for batch, (cartoon_input_data, cartoon_target_data, celeba_input_data, celeba_target_data) in tqdm(enumerate(zip(Cartoon_input_loader, Cartoon_target_loader, CelebA_input_loader, CelebA_target_loader)), total=len(Cartoon_input_loader)):
 
-            input_img, input_age = input_data
-            real_img, target_age = target_data
+            cartoon_input = cartoon_input_data
+            cartoon_target = cartoon_target_data
 
-            real_img = Variable(real_img).cuda()
-            # target_age = torch.from_numpy(target_age)
-            # target_age = Variable(target_age).cuda()
-            target_age = Variable(target_age).long()
-            target_age = target_age.cuda()
-            input_img = Variable(input_img).cuda()
-            input_age = Variable(input_age).long()
-            input_age = input_age.cuda()
-            # input_age_pred = input_age_pred.cuda()
-            # target_age_pred = target_age_pred.cuda()
+            celeba_input = celeba_input_data
+            celeba_target = celeba_target_data
+
+            cartoon_input = Variable(cartoon_input).cuda()
+            cartoon_target = Variable(cartoon_target).cuda()
+
+            celeba_input = Variable(celeba_input).cuda()
+            celeba_target = Variable(celeba_target).cuda()
+
+
+
+            """
+            Cartoon dataset train
+                        
+            """
+
 
 
             """
             Train Discriminator
             """
-            # for d_iter in range(args.d_iter):
 
             optimizer_D.zero_grad()
 
             # Real Loss
-            pred_real = discriminator(real_img)
+            pred_real = discriminator(cartoon_target)
             real = Variable(torch.ones(pred_real.size()))
             loss_D_real = adversarial_loss(pred_real.cuda(), real.cuda())
-            # loss_D_real_class = classificiation_loss(pred_age.cuda(), target_age)
-            # loss_D_real = loss_D_real_real
 
             loss_D_real.backward()
             optimizer_D.step()
 
-            # accuracy = compute_acc(pred_age, target_age)
 
             # Fake Loss
-            target_age2 = torch.randint(low=0, high=32, size=(args.batch_size,))
-            target_age2 = target_age2.cuda()
+            fake_img = generator(cartoon_input)
 
-            input_age2 = input_age - 48
-
-            diff_age = target_age2 - input_age2 + 32 # +6이었어 원래
-
-            diff_age.cuda()
-
-            fake_MRI, _ = generator(input_img, diff_age)
-
-            pred_fake = discriminator(fake_MRI.detach())
+            pred_fake = discriminator(fake_img.detach())
             fake = Variable(torch.zeros(pred_fake.size()))
             loss_D_fake = adversarial_loss(pred_fake.cuda(), fake.cuda())
-            # loss_D_fake_class = classificiation_loss(pred_age2.cuda(), target_age2)
-            # loss_D_fake = loss_D_fake_fake
 
             loss_D_fake.backward()
             optimizer_D.step()
@@ -127,62 +143,97 @@ def main():
             """
             Train Generator
             """
-            # for g_iter in range(args.g_iter):
 
             optimizer_G.zero_grad()
 
-            fake_MRI, fake_pred_age = generator(input_img, diff_age)
+            fake_img = generator(cartoon_input)
 
-            pred_real2 = discriminator(fake_MRI)
+            pred_real2 = discriminator(fake_img)
             loss_G_real = adversarial_loss(pred_real2, real.cuda())
-            # loss_G_class = classificiation_loss(pred_age3, target_age2)
 
             ## Identity Loss
-            # loss_G_identity = identity_loss(input_img, fake_MRI)
-
-            ## Age Prediction Loss
-            real_pred_age = input_age2 + diff_age - 32 + 48 # diff_age는 이미 +32한거니 -32해야 정상 나이
-            # fake_pred_age = SFCN(fake_MRI)
-            loss_G_prediction = Age_Prediction_loss(fake_pred_age.float(), real_pred_age.float())
-
-            mae = torch.abs(fake_pred_age - real_pred_age).sum() / batch_size
+            loss_G_identity = identity_loss(cartoon_input, fake_img)
 
             # Total Loss
-            # loss_G = 75*loss_G_real + 30*loss_G_prediction
-            loss_G = loss_G_real + 10 * loss_G_prediction
+            loss_G = loss_G_real + 0.001 * loss_G_identity
 
             loss_G.backward()
             optimizer_G.step()
 
 
-            D_loss += loss_D_fake.item()
-            G_loss += loss_G_real.item()
-            A_loss += loss_G_prediction.item()
-            # Accuracy += accuracy
-            MAE += mae.item()
-
-            # print(
-            #       "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f] [Accuracy: %d]"
-            #       % (epoch, args.epoch, batch, len(Input_dataloader), loss_D_fake.item(), loss_G.item(), accuracy)
-            #       )
+            Cartoon_D_loss += loss_D_fake.item()
+            Cartoon_G_loss += loss_G_real.item()
 
 
 
 
+            """
+            CelebA dataset train
+
+            """
+
+            """
+            Train Discriminator
+            """
+
+            optimizer_D.zero_grad()
+
+            # Real Loss
+            pred_real = discriminator(celeba_target)
+            real = Variable(torch.ones(pred_real.size()))
+            loss_D_real = adversarial_loss(pred_real.cuda(), real.cuda())
+
+            loss_D_real.backward()
+            optimizer_D.step()
+
+            # Fake Loss
+            fake_img = generator(celeba_input)
+
+            pred_fake = discriminator(fake_img.detach())
+            fake = Variable(torch.zeros(pred_fake.size()))
+            loss_D_fake = adversarial_loss(pred_fake.cuda(), fake.cuda())
+
+            loss_D_fake.backward()
+            optimizer_D.step()
+
+            """
+            Train Generator
+            """
+
+            optimizer_G.zero_grad()
+
+            fake_img = generator(celeba_input)
+
+            pred_real2 = discriminator(fake_img)
+            loss_G_real = adversarial_loss(pred_real2, real.cuda())
+
+            ## Identity Loss
+            loss_G_identity = identity_loss(celeba_input, fake_img)
+
+            # Total Loss
+            loss_G = loss_G_real + 0.001 * loss_G_identity
+
+            loss_G.backward()
+            optimizer_G.step()
+
+            CelebA_D_loss += loss_D_fake.item()
+            CelebA_G_loss += loss_G_real.item()
 
 
-        print('D_loss: {:3f} G_loss: {:3f} A_loss: {:3f} Gen_MAE: {:.3f}'.format(D_loss / len(Input_dataloader),
-                                                                                        G_loss / len(Input_dataloader),
-                                                                                        A_loss / len(Input_dataloader),
-                                                                                        MAE / len(Input_dataloader)))
 
-        if epoch % 5 == 0:
 
-            createFolder('/DataCommon2/mjy/IBSSL/output_image/epoch_%d' % epoch)
+        print('Cartoon_D_loss: {:3f} Cartoon_G_loss: {:3f}'.format(Cartoon_D_loss / len(Cartoon_input_loader),
+                                                                   Cartoon_G_loss / len(Cartoon_input_loader)))
+        print('CelebA_D_loss: {:3f} CelebA_G_loss: {:3f}'.format(CelebA_D_loss / len(Cartoon_input_loader),
+                                                                 CelebA_G_loss / len(Cartoon_input_loader)))
 
-            # torch.save(generator.state_dict(), '/DataCommon2/mjy/IBSSL/GAN_save/G_lr_%d.pth' % epoch)
-
-            generator.train()
+        # if epoch % 5 == 0:
+        #
+        #     createFolder('/DataCommon2/mjy/IBSSL/output_image/epoch_%d' % epoch)
+        #
+        #     # torch.save(generator.state_dict(), '/DataCommon2/mjy/IBSSL/GAN_save/G_lr_%d.pth' % epoch)
+        #
+        #     generator.train()
 
 
 

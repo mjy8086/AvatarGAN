@@ -43,7 +43,7 @@ class CNNencoder_gn_drop(nn.Module):
     def __init__(self, in_c, out_c):
         super().__init__()
         self.model = nn.Sequential(
-            nn.Conv2d(in_c, out_c, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.Conv2d(in_c, out_c, kernel_size=3, stride=2, padding=1, bias=False),
             nn.GroupNorm(16, out_c, eps=1e-6),
             nn.LeakyReLU(inplace=True),
             nn.Dropout(0.5)
@@ -59,7 +59,7 @@ class CNNencoder_ln(nn.Module):
         super().__init__()
         self.model = nn.Sequential(
             nn.Conv2d(in_c, out_c, kernel_size=3, stride=1, padding=1, bias=False),
-            nn.GroupNorm(23, out_c, eps=1e-6),
+            nn.GroupNorm(3, out_c, eps=1e-6),
             nn.LeakyReLU(inplace=True)
         )
 
@@ -90,7 +90,7 @@ class Concat_ln(nn.Module):
         super().__init__()
         self.model = nn.Sequential(
             nn.Conv2d(in_c, out_c, kernel_size=3, stride=1, padding=1, bias=False),
-            nn.GroupNorm(23, out_c, eps=1e-6),
+            nn.GroupNorm(3, out_c, eps=1e-6),
             nn.LeakyReLU(inplace=True)
         )
 
@@ -303,21 +303,21 @@ class ViT(nn.Module):
         self.conv_more = Conv2dReLU(768, 256, kernel_size=3, padding=1, use_groupnorm=True)
 
     def forward(self, x):
-        # (B, 256, 32, 48)
+        # (B, 256, 16, 16)
         x = self.embeddings(x)
-        # (B, 384, 768)
+        # (B, 64, 768)
         x = self.encoder(x)  # (B, n_patch, hidden)
-        # (B, 384, 768)
+        # (B, 64, 768)
         B, n_patch, hidden = x.size()
-        # B=B, n_patch=384, hidden=768
+        # B=B, n_patch=64, hidden=768
         h, w = (self.img_size[0] // 2**self.down_factor // self.patch_size[0]), (self.img_size[1] // 2**self.down_factor // self.patch_size[0])
-        # h=24, w=16
+        # h=8, w=8
         x = x.permute(0, 2, 1)
-        # (B, 768, 384)
+        # (B, 768, 64)
         x = x.contiguous().view(B, hidden, h, w)
-        # (B, 768, 16, 24)
+        # (B, 768, 8, 8)
         x = self.conv_more(x)
-        # (B, 256, 16, 24)
+        # (B, 256, 8, 8)
         return x
 
 
@@ -326,7 +326,7 @@ class ViT(nn.Module):
 
 # CNN Encoder - ViT bottle neck - CNN Decoder
 class ViT_UNet(nn.Module):
-    def __init__(self, img_size=(512, 768)):
+    def __init__(self, img_size=(256, 256)):
         super().__init__()
 
         self.pooling = nn.MaxPool2d(kernel_size=2)
@@ -360,7 +360,7 @@ class ViT_UNet(nn.Module):
 
 
     def forward(self, x):
-        # (B, in_channel, 512, 768)
+        # (B, in_channel, 256, 256)
         c1 = self.conv1_1(x)
         c1 = self.conv1_2(c1)
         # (B, 16, 256, 256)
@@ -373,7 +373,7 @@ class ViT_UNet(nn.Module):
         # (B, 32, 64, 64)
         c3 = self.conv3_1(p2)
         c3 = self.conv3_2(c3)
-        # (B, 32, 64, 64)
+        # (B, 64, 64, 64)
         p3 = self.pooling(c3)
         # (B, 64, 32, 32)
         c4 = self.conv4_1(p3)
@@ -423,7 +423,7 @@ class ViT_UNet(nn.Module):
 ####### Discriminator
 
 class Discriminator(nn.Module):
-    def __init__(self, in_channels=1):
+    def __init__(self, in_channels=3):
         super().__init__()
 
         # self.age_emb = nn.Embedding(7, 7)
@@ -445,7 +445,7 @@ class Discriminator(nn.Module):
         self.conv5_1 = CNNencoder_gn(16*8, 16*16)
         self.conv5_2 = CNNencoder_gn_drop(16*16, 16*16)
 
-        self.realfake = nn.Linear(16*16*7*6, 1)
+        self.realfake = nn.Linear(16*16*8*8, 1)
         # self.condition = nn.Linear(16*16*3*4*3, 38)
 
         self.sig = nn.Sigmoid()
@@ -457,30 +457,30 @@ class Discriminator(nn.Module):
         c1 = self.conv1_1(x)
         # (B, nf, 256, 256)
         c1 = self.conv1_2(c1)
-        # (B, nf, 256, 256)
+        # (B, nf, 128, 128)
 
         c2 = self.conv2_1(c1)
-        # (B, nf*2, 256, 256)
-        c2 = self.conv2_2(c2)
         # (B, nf*2, 128, 128)
+        c2 = self.conv2_2(c2)
+        # (B, nf*2, 64, 64)
 
         c3 = self.conv3_1(c2)
-        # (B, nf*4, 128, 128)
-        c3 = self.conv3_2(c3)
         # (B, nf*4, 64, 64)
+        c3 = self.conv3_2(c3)
+        # (B, nf*4, 32 ,32)
 
         c4 = self.conv4_1(c3)
-        # (B, nf*8, 64, 64)
-        c4 = self.conv4_2(c4)
         # (B, nf*8, 32, 32)
+        c4 = self.conv4_2(c4)
+        # (B, nf*8, 16, 16)
 
         c5 = self.conv5_1(c4)
-        # (B, nf*8, 32, 32)
+        # (B, nf*8, 16, 16)
         c5 = self.conv5_2(c5)
-        # (B, nf*16, 16, 16)
+        # (B, nf*16, 8, 8)
 
-        m = c5.view(-1, 16*16*16*16)
-        # (B, 9216)
+        m = c5.view(-1, 16*16*8*8)
+        # (B, 16382)
         # rf = self.sig(self.realfake(m))
         # c = self.soft(self.condition(m))
         out = self.realfake(m)

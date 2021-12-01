@@ -32,23 +32,25 @@ df_cartoon = create_df(Cartoon_path)
 df_celeb = create_df(CelebA_path)
 
 Cartoon = df_cartoon['id'].values
-CelebA = df_cartoon['id'].values
+CelebA = df_celeb['id'].values
 
 
 # split data
 # X_trainval, X_test = train_test_split(df['id'].values, test_size=0.1, random_state=19)
 # X_train, X_val = train_test_split(X_trainval, test_size=0.15, random_state=19)
 
-Cartoon_img = Image.open(Cartoon_path + df_cartoon['id'][100] + '.png')
-CelebA_img = Image.open(CelebA_path + df_celeb['id'][100] + '.jpg')
+# Cartoon_img = Image.open(Cartoon_path + df_cartoon['id'][100] + '.png')
+# CelebA_img = Image.open(CelebA_path + df_celeb['id'][100] + '.jpg')
 
 
 # Dataset class
 class Cartoon_Dataset(Dataset):
-    def __init__(self, img_path, X, resize):
+    def __init__(self, img_path, X, resize, mean, std):
         self.img_path = img_path
         self.X = X
         self.resize = resize
+        self.mean = mean
+        self.std = std
     def __len__(self):
         return len(self.X)
     def __getitem__(self, idx):
@@ -58,14 +60,18 @@ class Cartoon_Dataset(Dataset):
         aug = self.resize(image=img)
         img = Image.fromarray(aug['image'])
 
-        img = Image.fromarray(img)
+        t = T.Compose([T.ToTensor(), T.Normalize(self.mean, self.std)])
+        img = t(img)
+
         return img
 
 class CelebA_Dataset(Dataset):
-    def __init__(self, img_path, X, resize):
+    def __init__(self, img_path, X, resize, mean, std):
         self.img_path = img_path
         self.X = X
         self.resize = resize
+        self.mean = mean
+        self.std = std
     def __len__(self):
         return len(self.X)
     def __getitem__(self, idx):
@@ -75,14 +81,23 @@ class CelebA_Dataset(Dataset):
         aug = self.resize(image=img)
         img = Image.fromarray(aug['image'])
 
-        img = Image.fromarray(img)
+        t = T.Compose([T.ToTensor(), T.Normalize(self.mean, self.std)])
+        img = t(img)
+
         return img
 
 Resize = A.Compose([A.Resize(256, 256, interpolation=cv2.INTER_NEAREST)])
 
+mean=[0.485, 0.456, 0.406]
+std=[0.229, 0.224, 0.225]
+
 # datasets
-Cartoon_data = Cartoon_Dataset(Cartoon_path, Cartoon, Resize)
-CelebA_data = CelebA_Dataset(CelebA_path, CelebA)
+Cartoon_data_input = Cartoon_Dataset(Cartoon_path, Cartoon, Resize, mean, std)
+Cartoon_data_target = Cartoon_Dataset(Cartoon_path, Cartoon, Resize, mean, std)
+
+CelebA_data_input = CelebA_Dataset(CelebA_path, CelebA, Resize, mean, std)
+CelebA_data_target = CelebA_Dataset(CelebA_path, CelebA, Resize, mean, std)
+
 
 # dataloader
 # batch_size = 32
