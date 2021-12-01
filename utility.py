@@ -14,9 +14,7 @@ import os
 # set image path
 Cartoon_path = '/home/mjy/AvatarGAN/data/cartoonset10k/cartoon/'
 CelebA_path = '/home/mjy/AvatarGAN/data/source_train/data/'
-
-# the number of classes of this datase is 23
-n_classes = 23
+test_CelebA_path = '/home/mjy/AvatarGAN/data/source_test/data/'
 
 
 def create_df(path):
@@ -30,17 +28,11 @@ def create_df(path):
 
 df_cartoon = create_df(Cartoon_path)
 df_celeb = create_df(CelebA_path)
+df_test_celeb = create_df(test_CelebA_path)
 
 Cartoon = df_cartoon['id'].values
 CelebA = df_celeb['id'].values
-
-
-# split data
-# X_trainval, X_test = train_test_split(df['id'].values, test_size=0.1, random_state=19)
-# X_train, X_val = train_test_split(X_trainval, test_size=0.15, random_state=19)
-
-# Cartoon_img = Image.open(Cartoon_path + df_cartoon['id'][100] + '.png')
-# CelebA_img = Image.open(CelebA_path + df_celeb['id'][100] + '.jpg')
+test_CelebA = df_test_celeb['id'].values
 
 
 # Dataset class
@@ -98,6 +90,8 @@ Cartoon_data_target = Cartoon_Dataset(Cartoon_path, Cartoon, Resize, mean, std)
 CelebA_data_input = CelebA_Dataset(CelebA_path, CelebA, Resize, mean, std)
 CelebA_data_target = CelebA_Dataset(CelebA_path, CelebA, Resize, mean, std)
 
+
+test_CelebA = CelebA_Dataset(test_CelebA_path, test_CelebA, Resize, mean, std)
 
 # dataloader
 # batch_size = 32
