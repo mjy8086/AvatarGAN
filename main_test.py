@@ -105,6 +105,18 @@ def main():
     CelebA_Discriminator.train()
 
 
+    # data for test
+    test1 = test_CelebA[1]
+    test2 = test_CelebA[2]
+    test3 = test_CelebA[5]
+    test1 = test1.unsqueeze(0)
+    test2 = test2.unsqueeze(0)
+    test3 = test3.unsqueeze(0)
+    test1 = Variable(test1).cuda()
+    test2 = Variable(test2).cuda()
+    test3 = Variable(test3).cuda()
+
+
     for epoch in range(epoch):
 
         print('Epoch {}/{}'.format(epoch, args.epoch))
@@ -260,27 +272,7 @@ def main():
         # create a folder for generated images
         createFolder('/home/mjy/AvatarGAN/generated_img/epoch_%d' % epoch)
 
-        test6 = test_CelebA[5]
-        test61 = test6.permute(1, 2, 0)
-        test62 = test61.cpu()
-        test63 = test62.numpy()
-        plt.imshow(test63)
-
-
-
         with torch.no_grad():
-
-            test1 = test_CelebA[1]
-            test2 = test_CelebA[2]
-            test3 = test_CelebA[5]
-
-            test1 = test1.unsqueeze(0)
-            test2 = test2.unsqueeze(0)
-            test3 = test3.unsqueeze(0)
-
-            test1 = Variable(test1).cuda()
-            test2 = Variable(test2).cuda()
-            test3 = Variable(test3).cuda()
 
             # generation for test1
             out11, c15, c14, c13, c12, c11 = CelebA_Encoder(test1)
