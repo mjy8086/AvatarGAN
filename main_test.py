@@ -28,7 +28,7 @@ from tqdm import tqdm
 from model_test import *
 from utility import *
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 torch.cuda.empty_cache()
 
@@ -260,61 +260,73 @@ def main():
         # create a folder for generated images
         createFolder('/home/mjy/AvatarGAN/generated_img/epoch_%d' % epoch)
 
+        test6 = test_CelebA[5]
+        test61 = test6.permute(1, 2, 0)
+        test62 = test61.cpu()
+        test63 = test62.numpy()
+        plt.imshow(test63)
+
+
+
         with torch.no_grad():
 
-            for batch, test_data in tqdm(enumerate(test_CelebA_loader), total=len(test_CelebA_loader)):
-                test_img = test_data
-                test_img = Variable(test_img).cuda()
+            test1 = test_CelebA[1]
+            test2 = test_CelebA[2]
+            test3 = test_CelebA[5]
 
-                # generate syntesized image
-                out_cartoon_encoder = Cartoon_Encoder(test_img)
-                out_bottleneck = Bottleneck(out_cartoon_encoder)
-                generated_image = CelebA_Decoder(out_bottleneck)
+            test1 = test1.unsqueeze(0)
+            test2 = test2.unsqueeze(0)
+            test3 = test3.unsqueeze(0)
 
-                generated_image = generated_image.permute(0, 2, 3, 1)
+            test1 = Variable(test1).cuda()
+            test2 = Variable(test2).cuda()
+            test3 = Variable(test3).cuda()
 
-                output = generated_image.detach()
-                output = output.cpu()
-                output = np.squeeze(output)
-                output = output.numpy()
+            # generation for test1
+            out11, c15, c14, c13, c12, c11 = CelebA_Encoder(test1)
+            out12 = Bottleneck(out11)
+            out111 = Cartoon_Decoder(out12, c15, c14, c13, c12, c11)
+            out111 = out111.permute(0, 2, 3, 1)
+            out111 = out111.detach()
+            out111 = out111.cpu()
+            out111 = np.squeeze(out111)
+            out111 = out111.numpy()
 
-                output0 = output[0]
-                output1 = output[1]
-                output2 = output[2]
-                output3 = output[3]
-                output4 = output[4]
-                output5 = output[5]
-                output6 = output[6]
-                output7 = output[7]
+            # generation for test2
+            out21, c25, c24, c23, c22, c21 = CelebA_Encoder(test2)
+            out21 = Bottleneck(out21)
+            out222 = Cartoon_Decoder(out21, c25, c24, c23, c22, c21)
+            out222 = out222.permute(0, 2, 3, 1)
+            out222 = out222.detach()
+            out222 = out222.cpu()
+            out222 = np.squeeze(out222)
+            out222 = out222.numpy()
 
-                plt.axis('off'), plt.xticks([]), plt.yticks([])
-                plt.tight_layout()
-                plt.subplots_adjust(left=0, bottom=0, right=1, top=1, hspace=0, wspace=0)
+            # generation for test3
+            out31, c35, c34, c33, c32, c31 = CelebA_Encoder(test3)
+            out32 = Bottleneck(out31)
+            out333 = Cartoon_Decoder(out32, c35, c34, c33, c32, c31)
+            out333 = out333.permute(0, 2, 3, 1)
+            out333 = out333.detach()
+            out333 = out333.cpu()
+            out333 = np.squeeze(out333)
+            out333 = out333.numpy()
 
-                plt.imshow(output0)
-                plt.savefig('/home/mjy/AvatarGAN/generated_img/epoch_%d/output0.png' % epoch, bbox_inches='tight',
-                            pad_inches=0)
-                plt.imshow(output1)
-                plt.savefig('/home/mjy/AvatarGAN/generated_img/epoch_%d/output1.png' % epoch, bbox_inches='tight',
-                            pad_inches=0)
-                plt.imshow(output2)
-                plt.savefig('/home/mjy/AvatarGAN/generated_img/epoch_%d/output2.png' % epoch, bbox_inches='tight',
-                            pad_inches=0)
-                plt.imshow(output3)
-                plt.savefig('/home/mjy/AvatarGAN/generated_img/epoch_%d/output3.png' % epoch, bbox_inches='tight',
-                            pad_inches=0)
-                plt.imshow(output4)
-                plt.savefig('/home/mjy/AvatarGAN/generated_img/epoch_%d/output4.png' % epoch, bbox_inches='tight',
-                            pad_inches=0)
-                plt.imshow(output5)
-                plt.savefig('/home/mjy/AvatarGAN/generated_img/epoch_%d/output5.png' % epoch, bbox_inches='tight',
-                            pad_inches=0)
-                plt.imshow(output6)
-                plt.savefig('/home/mjy/AvatarGAN/generated_img/epoch_%d/output6.png' % epoch, bbox_inches='tight',
-                            pad_inches=0)
-                plt.imshow(output7)
-                plt.savefig('/home/mjy/AvatarGAN/generated_img/epoch_%d/output7.png' % epoch, bbox_inches='tight',
-                            pad_inches=0)
+
+            plt.axis('off'), plt.xticks([]), plt.yticks([])
+            plt.tight_layout()
+            plt.subplots_adjust(left=0, bottom=0, right=1, top=1, hspace=0, wspace=0)
+
+            plt.imshow(out111)
+            plt.savefig('/home/mjy/AvatarGAN/generated_img/epoch_%d/out1.png' % epoch, bbox_inches='tight',
+                        pad_inches=0)
+            plt.imshow(out222)
+            plt.savefig('/home/mjy/AvatarGAN/generated_img/epoch_%d/out2.png' % epoch, bbox_inches='tight',
+                        pad_inches=0)
+            plt.imshow(out333)
+            plt.savefig('/home/mjy/AvatarGAN/generated_img/epoch_%d/out3.png' % epoch, bbox_inches='tight',
+                        pad_inches=0)
+
 
         Cartoon_Encoder.train()
         CelebA_Encoder.train()
