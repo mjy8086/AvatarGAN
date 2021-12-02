@@ -304,7 +304,6 @@ def main():
             out333 = np.squeeze(out333)
             out333 = out333.numpy()
 
-
             plt.axis('off'), plt.xticks([]), plt.yticks([])
             plt.tight_layout()
             plt.subplots_adjust(left=0, bottom=0, right=1, top=1, hspace=0, wspace=0)
@@ -319,7 +318,6 @@ def main():
             plt.savefig('/home/mjy/AvatarGAN/generated_img/epoch_%d/out3.png' % epoch, bbox_inches='tight',
                         pad_inches=0)
 
-
         Cartoon_Encoder.train()
         CelebA_Encoder.train()
         Bottleneck.train()
@@ -328,15 +326,15 @@ def main():
         Cartoon_Discriminator.train()
         CelebA_Discriminator.train()
 
-        if epoch % 1 == 0:
+        if epoch % 10 == 0:
 
-            torch.save(Cartoon_Encoder.state_dict(), '/home/mjy/AvatarGAN/generated_img/epoch_%d/Cartoon_Encoder_%d.pth' % epoch)
-            torch.save(CelebA_Encoder.state_dict(), '/home/mjy/AvatarGAN/generated_img/epoch_%d/CelebA_Encoder_%d.pth' % epoch)
-            torch.save(Bottleneck.state_dict(), '/home/mjy/AvatarGAN/generated_img/epoch_%d/Bottleneck_%d.pth' % epoch)
-            torch.save(Cartoon_Decoder.state_dict(), '/home/mjy/AvatarGAN/generated_img/epoch_%d/Cartoon_Decoder_%d.pth' % epoch)
-            torch.save(CelebA_Decoder.state_dict(), '/home/mjy/AvatarGAN/generated_img/epoch_%d/CelebA_Decoder_%d.pth' % epoch)
-            torch.save(Cartoon_Discriminator.state_dict(), '/home/mjy/AvatarGAN/generated_img/epoch_%d/Cartoon_Discriminator_%d.pth' % epoch)
-            torch.save(CelebA_Discriminator.state_dict(), '/home/mjy/AvatarGAN/generated_img/epoch_%d/CelebA_Discriminator_%d.pth' % epoch)
+            torch.save(Cartoon_Encoder.state_dict(), '/home/mjy/AvatarGAN/generated_img/epoch_%d/Cartoon_Encoder.pth' % epoch)
+            torch.save(CelebA_Encoder.state_dict(), '/home/mjy/AvatarGAN/generated_img/epoch_%d/CelebA_Encoder.pth' % epoch)
+            torch.save(Bottleneck.state_dict(), '/home/mjy/AvatarGAN/generated_img/epoch_%d/Bottleneck.pth' % epoch)
+            torch.save(Cartoon_Decoder.state_dict(), '/home/mjy/AvatarGAN/generated_img/epoch_%d/Cartoon_Decoder.pth' % epoch)
+            torch.save(CelebA_Decoder.state_dict(), '/home/mjy/AvatarGAN/generated_img/epoch_%d/CelebA_Decoder.pth' % epoch)
+            torch.save(Cartoon_Discriminator.state_dict(), '/home/mjy/AvatarGAN/generated_img/epoch_%d/Cartoon_Discriminator.pth' % epoch)
+            torch.save(CelebA_Discriminator.state_dict(), '/home/mjy/AvatarGAN/generated_img/epoch_%d/CelebA_Discriminator.pth' % epoch)
 
 
 if __name__ == '__main__':
