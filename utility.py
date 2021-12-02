@@ -53,8 +53,8 @@ class Cartoon_Dataset(Dataset):
         img = Image.fromarray(aug['image'])
 
         # for Gaussian Norm
-        t = T.Compose([T.ToTensor(), T.Normalize(self.mean, self.std)])
-        # t = T.Compose([T.ToTensor()])
+        # t = T.Compose([T.ToTensor(), T.Normalize(self.mean, self.std)])
+        t = T.Compose([T.ToTensor()])
         img = t(img)
 
         return img
@@ -76,8 +76,8 @@ class CelebA_Dataset(Dataset):
         img = Image.fromarray(aug['image'])
 
         # for Gaussian Norm
-        t = T.Compose([T.ToTensor(), T.Normalize(self.mean, self.std)])
-        # t = T.Compose([T.ToTensor()])
+        # t = T.Compose([T.ToTensor(), T.Normalize(self.mean, self.std)])
+        t = T.Compose([T.ToTensor()])
         img = t(img)
 
         return img
