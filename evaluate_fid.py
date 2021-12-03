@@ -42,9 +42,9 @@ args = parser.parse_args()
 model = InceptionV3().cuda()
 
 
-CelebA_Encoder_path = "/home/mjy/AvatarGAN/generated_img/epoch_100/CelebA_Encoder.pth"
-Bottleneck_path = "/home/mjy/AvatarGAN/generated_img/epoch_100/Bottleneck.pth"
-Cartoon_Decoder_path = "/home/mjy/AvatarGAN/generated_img/epoch_100/Cartoon_Decoder.pth"
+CelebA_Encoder_path = "/home/mjy/AvatarGAN/generated_img/epoch_40/CelebA_Encoder.pth"
+Bottleneck_path = "/home/mjy/AvatarGAN/generated_img/epoch_40/Bottleneck.pth"
+Cartoon_Decoder_path = "/home/mjy/AvatarGAN/generated_img/epoch_40/Cartoon_Decoder.pth"
 
 
 
@@ -100,7 +100,7 @@ def main():
 
             FID_score += fid.item()
 
-    print('Cartoon_D_loss: {:3f}'.format(FID_score / len(test_CelebA_loader)))
+    print('FID_score: {:3f}'.format(FID_score / len(test_CelebA_loader)))
 
 
 
