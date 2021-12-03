@@ -416,7 +416,7 @@ class Cartoon_Decoder(nn.Module):
     def __init__(self):
         super().__init__()
         self.upsample = nn.Upsample(scale_factor=2)
-        self.concat1 = CNNencoder_ln(256, 128)
+        self.concat1 = CNNencoder_gn(256, 128)
         self.convup1 = CNNencoder_gn(128, 128)
         self.concat2 = CNNencoder_gn(128, 64)
         self.convup2 = CNNencoder_gn(64, 64)
@@ -449,7 +449,7 @@ class CelebA_Decoder(nn.Module):
     def __init__(self):
         super().__init__()
         self.upsample = nn.Upsample(scale_factor=2)
-        self.concat1 = CNNencoder_ln(256, 128)
+        self.concat1 = CNNencoder_gn(256, 128)
         self.convup1 = CNNencoder_gn(128, 128)
         self.concat2 = CNNencoder_gn(128, 64)
         self.convup2 = CNNencoder_gn(64, 64)
