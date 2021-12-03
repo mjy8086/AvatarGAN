@@ -28,7 +28,7 @@ from tqdm import tqdm
 from model_wo_skip import *
 from utility import *
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
 torch.cuda.empty_cache()
 
@@ -161,9 +161,9 @@ def main():
             optimizer_cartoon_D.step()
 
             # Fake Loss
-            e_out, c5, c4, c3, c2, c1 = Cartoon_Encoder(cartoon_input)
+            e_out = Cartoon_Encoder(cartoon_input)
             b_out = Bottleneck(e_out)
-            fake_img = Cartoon_Decoder(b_out, c5, c4, c3, c2, c1)
+            fake_img = Cartoon_Decoder(b_out)
 
 
             pred_fake = Cartoon_Discriminator(fake_img.detach())
@@ -179,9 +179,9 @@ def main():
 
             optimizer_cartoon_G.zero_grad()
 
-            e_out, c5, c4, c3, c2, c1 = Cartoon_Encoder(cartoon_input)
+            e_out = Cartoon_Encoder(cartoon_input)
             b_out = Bottleneck(e_out)
-            fake_img = Cartoon_Decoder(b_out, c5, c4, c3, c2, c1)
+            fake_img = Cartoon_Decoder(b_out)
 
             pred_real2 = Cartoon_Discriminator(fake_img)
             loss_G_real = adversarial_loss(pred_real2, real.cuda())
@@ -218,9 +218,9 @@ def main():
             optimizer_celeba_D.step()
 
             # Fake Loss
-            e_out, c5, c4, c3, c2, c1 = CelebA_Encoder(celeba_input)
+            e_out = CelebA_Encoder(celeba_input)
             b_out = Bottleneck(e_out)
-            fake_img = CelebA_Decoder(b_out, c5, c4, c3, c2, c1)
+            fake_img = CelebA_Decoder(b_out)
 
             pred_fake = CelebA_Discriminator(fake_img.detach())
             fake = Variable(torch.zeros(pred_fake.size()))
@@ -235,9 +235,9 @@ def main():
 
             optimizer_celeba_G.zero_grad()
 
-            e_out, c5, c4, c3, c2, c1 = CelebA_Encoder(celeba_input)
+            e_out = CelebA_Encoder(celeba_input)
             b_out = Bottleneck(e_out)
-            fake_img = CelebA_Decoder(b_out, c5, c4, c3, c2, c1)
+            fake_img = CelebA_Decoder(b_out)
 
             pred_real2 = CelebA_Discriminator(fake_img)
             loss_G_real = adversarial_loss(pred_real2, real.cuda())
@@ -270,14 +270,14 @@ def main():
         CelebA_Discriminator.eval()
 
         # create a folder for generated images
-        createFolder('/home/mjy/AvatarGAN/generated_img/epoch_%d' % epoch)
+        createFolder('/home/mjy/AvatarGAN/generated_img_wo_skip/epoch_%d' % epoch)
 
         with torch.no_grad():
 
             # generation for test1
-            out11, c15, c14, c13, c12, c11 = CelebA_Encoder(test1)
+            out11 = CelebA_Encoder(test1)
             out12 = Bottleneck(out11)
-            out111 = Cartoon_Decoder(out12, c15, c14, c13, c12, c11)
+            out111 = Cartoon_Decoder(out12)
             out111 = out111.permute(0, 2, 3, 1)
             out111 = out111.detach()
             out111 = out111.cpu()
@@ -285,9 +285,9 @@ def main():
             out111 = out111.numpy()
 
             # generation for test2
-            out21, c25, c24, c23, c22, c21 = CelebA_Encoder(test2)
+            out21 = CelebA_Encoder(test2)
             out21 = Bottleneck(out21)
-            out222 = Cartoon_Decoder(out21, c25, c24, c23, c22, c21)
+            out222 = Cartoon_Decoder(out21)
             out222 = out222.permute(0, 2, 3, 1)
             out222 = out222.detach()
             out222 = out222.cpu()
@@ -295,9 +295,9 @@ def main():
             out222 = out222.numpy()
 
             # generation for test3
-            out31, c35, c34, c33, c32, c31 = CelebA_Encoder(test3)
+            out31 = CelebA_Encoder(test3)
             out32 = Bottleneck(out31)
-            out333 = Cartoon_Decoder(out32, c35, c34, c33, c32, c31)
+            out333 = Cartoon_Decoder(out32)
             out333 = out333.permute(0, 2, 3, 1)
             out333 = out333.detach()
             out333 = out333.cpu()
@@ -309,13 +309,13 @@ def main():
             plt.subplots_adjust(left=0, bottom=0, right=1, top=1, hspace=0, wspace=0)
 
             plt.imshow(out111)
-            plt.savefig('/home/mjy/AvatarGAN/generated_img/epoch_%d/out1.png' % epoch, bbox_inches='tight',
+            plt.savefig('/home/mjy/AvatarGAN/generated_img_wo_skip/epoch_%d/out1.png' % epoch, bbox_inches='tight',
                         pad_inches=0)
             plt.imshow(out222)
-            plt.savefig('/home/mjy/AvatarGAN/generated_img/epoch_%d/out2.png' % epoch, bbox_inches='tight',
+            plt.savefig('/home/mjy/AvatarGAN/generated_img_wo_skip/epoch_%d/out2.png' % epoch, bbox_inches='tight',
                         pad_inches=0)
             plt.imshow(out333)
-            plt.savefig('/home/mjy/AvatarGAN/generated_img/epoch_%d/out3.png' % epoch, bbox_inches='tight',
+            plt.savefig('/home/mjy/AvatarGAN/generated_img_wo_skip/epoch_%d/out3.png' % epoch, bbox_inches='tight',
                         pad_inches=0)
 
         Cartoon_Encoder.train()
@@ -328,13 +328,13 @@ def main():
 
         if epoch % 10 == 0:
 
-            torch.save(Cartoon_Encoder.state_dict(), '/home/mjy/AvatarGAN/generated_img/epoch_%d/Cartoon_Encoder.pth' % epoch)
-            torch.save(CelebA_Encoder.state_dict(), '/home/mjy/AvatarGAN/generated_img/epoch_%d/CelebA_Encoder.pth' % epoch)
-            torch.save(Bottleneck.state_dict(), '/home/mjy/AvatarGAN/generated_img/epoch_%d/Bottleneck.pth' % epoch)
-            torch.save(Cartoon_Decoder.state_dict(), '/home/mjy/AvatarGAN/generated_img/epoch_%d/Cartoon_Decoder.pth' % epoch)
-            torch.save(CelebA_Decoder.state_dict(), '/home/mjy/AvatarGAN/generated_img/epoch_%d/CelebA_Decoder.pth' % epoch)
-            torch.save(Cartoon_Discriminator.state_dict(), '/home/mjy/AvatarGAN/generated_img/epoch_%d/Cartoon_Discriminator.pth' % epoch)
-            torch.save(CelebA_Discriminator.state_dict(), '/home/mjy/AvatarGAN/generated_img/epoch_%d/CelebA_Discriminator.pth' % epoch)
+            torch.save(Cartoon_Encoder.state_dict(), '/home/mjy/AvatarGAN/generated_img_wo_skip/epoch_%d/Cartoon_Encoder.pth' % epoch)
+            torch.save(CelebA_Encoder.state_dict(), '/home/mjy/AvatarGAN/generated_img_wo_skip/epoch_%d/CelebA_Encoder.pth' % epoch)
+            torch.save(Bottleneck.state_dict(), '/home/mjy/AvatarGAN/generated_img_wo_skip/epoch_%d/Bottleneck.pth' % epoch)
+            torch.save(Cartoon_Decoder.state_dict(), '/home/mjy/AvatarGAN/generated_img_wo_skip/epoch_%d/Cartoon_Decoder.pth' % epoch)
+            torch.save(CelebA_Decoder.state_dict(), '/home/mjy/AvatarGAN/generated_img_wo_skip/epoch_%d/CelebA_Decoder.pth' % epoch)
+            torch.save(Cartoon_Discriminator.state_dict(), '/home/mjy/AvatarGAN/generated_img_wo_skip/epoch_%d/Cartoon_Discriminator.pth' % epoch)
+            torch.save(CelebA_Discriminator.state_dict(), '/home/mjy/AvatarGAN/generated_img_wo_skip/epoch_%d/CelebA_Discriminator.pth' % epoch)
 
 
 if __name__ == '__main__':
