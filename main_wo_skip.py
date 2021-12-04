@@ -44,7 +44,7 @@ args = parser.parse_args()
 Cartoon_Encoder = Cartoon_Encoder().cuda()
 CelebA_Encoder = CelebA_Encoder().cuda()
 
-Bottleneck = Bottleneck().cuda()
+# Bottleneck = Bottleneck().cuda()
 
 Cartoon_Decoder = Cartoon_Decoder().cuda()
 CelebA_Decoder = CelebA_Decoder().cuda()
@@ -85,10 +85,10 @@ def main():
     # Age_Prediction_loss = nn.MSELoss().cuda()
 
     ####### Optimizers
-    optimizer_cartoon_G = torch.optim.Adam(list(Cartoon_Encoder.parameters()) + list(Bottleneck.parameters()) + list(Cartoon_Decoder.parameters()), lr=0.001, betas=(0.5, 0.999))
+    optimizer_cartoon_G = torch.optim.Adam(list(Cartoon_Encoder.parameters()) + list(Cartoon_Decoder.parameters()), lr=0.001, betas=(0.5, 0.999))
     optimizer_cartoon_D = torch.optim.Adam(Cartoon_Discriminator.parameters(), lr=0.001, betas=(0.5, 0.999))
 
-    optimizer_celeba_G = torch.optim.Adam(list(CelebA_Encoder.parameters()) + list(Bottleneck.parameters()) + list(CelebA_Decoder.parameters()), lr=0.001, betas=(0.5, 0.999))
+    optimizer_celeba_G = torch.optim.Adam(list(CelebA_Encoder.parameters()) + list(CelebA_Decoder.parameters()), lr=0.001, betas=(0.5, 0.999))
     optimizer_celeba_D = torch.optim.Adam(CelebA_Discriminator.parameters(), lr=0.001, betas=(0.5, 0.999))
 
 
@@ -98,7 +98,7 @@ def main():
     ####### Training
     Cartoon_Encoder.train()
     CelebA_Encoder.train()
-    Bottleneck.train()
+    # Bottleneck.train()
     Cartoon_Decoder.train()
     CelebA_Decoder.train()
     Cartoon_Discriminator.train()
@@ -162,8 +162,8 @@ def main():
 
             # Fake Loss
             e_out = Cartoon_Encoder(cartoon_input)
-            b_out = Bottleneck(e_out)
-            fake_img = Cartoon_Decoder(b_out)
+            # b_out = Bottleneck(e_out)
+            fake_img = Cartoon_Decoder(e_out)
 
 
             pred_fake = Cartoon_Discriminator(fake_img.detach())
@@ -180,8 +180,8 @@ def main():
             optimizer_cartoon_G.zero_grad()
 
             e_out = Cartoon_Encoder(cartoon_input)
-            b_out = Bottleneck(e_out)
-            fake_img = Cartoon_Decoder(b_out)
+            # b_out = Bottleneck(e_out)
+            fake_img = Cartoon_Decoder(e_out)
 
             pred_real2 = Cartoon_Discriminator(fake_img)
             loss_G_real = adversarial_loss(pred_real2, real.cuda())
@@ -219,8 +219,8 @@ def main():
 
             # Fake Loss
             e_out = CelebA_Encoder(celeba_input)
-            b_out = Bottleneck(e_out)
-            fake_img = CelebA_Decoder(b_out)
+            # b_out = Bottleneck(e_out)
+            fake_img = CelebA_Decoder(e_out)
 
             pred_fake = CelebA_Discriminator(fake_img.detach())
             fake = Variable(torch.zeros(pred_fake.size()))
@@ -236,8 +236,8 @@ def main():
             optimizer_celeba_G.zero_grad()
 
             e_out = CelebA_Encoder(celeba_input)
-            b_out = Bottleneck(e_out)
-            fake_img = CelebA_Decoder(b_out)
+            # b_out = Bottleneck(e_out)
+            fake_img = CelebA_Decoder(e_out)
 
             pred_real2 = CelebA_Discriminator(fake_img)
             loss_G_real = adversarial_loss(pred_real2, real.cuda())
@@ -263,7 +263,7 @@ def main():
         # if epoch % 1 == 0:
         Cartoon_Encoder.eval()
         CelebA_Encoder.eval()
-        Bottleneck.eval()
+        # Bottleneck.eval()
         Cartoon_Decoder.eval()
         CelebA_Decoder.eval()
         Cartoon_Discriminator.eval()
@@ -276,8 +276,8 @@ def main():
 
             # generation for test1
             out11 = CelebA_Encoder(test1)
-            out12 = Bottleneck(out11)
-            out111 = Cartoon_Decoder(out12)
+            # out12 = Bottleneck(out11)
+            out111 = Cartoon_Decoder(out11)
             out111 = out111.permute(0, 2, 3, 1)
             out111 = out111.detach()
             out111 = out111.cpu()
@@ -286,7 +286,7 @@ def main():
 
             # generation for test2
             out21 = CelebA_Encoder(test2)
-            out21 = Bottleneck(out21)
+            # out21 = Bottleneck(out21)
             out222 = Cartoon_Decoder(out21)
             out222 = out222.permute(0, 2, 3, 1)
             out222 = out222.detach()
@@ -296,8 +296,8 @@ def main():
 
             # generation for test3
             out31 = CelebA_Encoder(test3)
-            out32 = Bottleneck(out31)
-            out333 = Cartoon_Decoder(out32)
+            # out32 = Bottleneck(out31)
+            out333 = Cartoon_Decoder(out31)
             out333 = out333.permute(0, 2, 3, 1)
             out333 = out333.detach()
             out333 = out333.cpu()
@@ -320,7 +320,7 @@ def main():
 
         Cartoon_Encoder.train()
         CelebA_Encoder.train()
-        Bottleneck.train()
+        # Bottleneck.train()
         Cartoon_Decoder.train()
         CelebA_Decoder.train()
         Cartoon_Discriminator.train()
@@ -330,7 +330,7 @@ def main():
 
             torch.save(Cartoon_Encoder.state_dict(), '/home/mjy/AvatarGAN/generated_img_batchnorm_wd_skip/epoch_%d/Cartoon_Encoder.pth' % epoch)
             torch.save(CelebA_Encoder.state_dict(), '/home/mjy/AvatarGAN/generated_img_batchnorm_wd_skip/epoch_%d/CelebA_Encoder.pth' % epoch)
-            torch.save(Bottleneck.state_dict(), '/home/mjy/AvatarGAN/generated_img_batchnorm_wd_skip/epoch_%d/Bottleneck.pth' % epoch)
+            # torch.save(Bottleneck.state_dict(), '/home/mjy/AvatarGAN/generated_img_batchnorm_wd_skip/epoch_%d/Bottleneck.pth' % epoch)
             torch.save(Cartoon_Decoder.state_dict(), '/home/mjy/AvatarGAN/generated_img_batchnorm_wd_skip/epoch_%d/Cartoon_Decoder.pth' % epoch)
             torch.save(CelebA_Decoder.state_dict(), '/home/mjy/AvatarGAN/generated_img_batchnorm_wd_skip/epoch_%d/CelebA_Decoder.pth' % epoch)
             torch.save(Cartoon_Discriminator.state_dict(), '/home/mjy/AvatarGAN/generated_img_batchnorm_wd_skip/epoch_%d/Cartoon_Discriminator.pth' % epoch)

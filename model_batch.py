@@ -357,7 +357,7 @@ class Cartoon_Encoder(nn.Module):
         p4 = self.pooling(c4)
         c5 = self.conv5_1(p4)
         out = self.conv5_2(c5)
-        return out, c5, c4, c3, c2, c1
+        return out, c4, c2
 
 
 class CelebA_Encoder(nn.Module):
@@ -389,7 +389,7 @@ class CelebA_Encoder(nn.Module):
         p4 = self.pooling(c4)
         c5 = self.conv5_1(p4)
         out = self.conv5_2(c5)
-        return out, c5, c4, c3, c2, c1
+        return out, c4, c2
 
 
 
@@ -417,31 +417,31 @@ class Cartoon_Decoder(nn.Module):
     def __init__(self):
         super().__init__()
         self.upsample = nn.Upsample(scale_factor=2)
-        self.concat1 = Concat(512, 128)
+        self.concat1 = CNNencoder(256, 128)
         self.convup1 = CNNencoder(128, 128)
         self.concat2 = Concat(256, 64)
         self.convup2 = CNNencoder(64, 64)
-        self.concat3 = Concat(128, 32)
+        self.concat3 = CNNencoder(64, 32)
         self.convup3 = CNNencoder(32, 32)
         self.concat4 = Concat(64, 16)
         self.convup4 = CNNencoder(16, 16)
-        self.concat5 = Concat(32, 3)
+        self.concat5 = CNNencoder(16, 3)
         self.convup5 = CNNencoder(3, 3)
-    def forward(self, x, c5, c4, c3, c2, c1):
-        v1 = self.upsample(x)
-        u1 = self.concat1(v1, c5)
+    def forward(self, x, c4, c2):
+        # v1 = self.upsample(x)
+        u1 = self.concat1(x)
         u1 = self.convup1(u1)
         u1 = self.upsample(u1)
         u2 = self.concat2(u1, c4)
         u2 = self.convup2(u2)
         u2 = self.upsample(u2)
-        u3 = self.concat3(u2, c3)
+        u3 = self.concat3(u2)
         u3 = self.convup3(u3)
         u3 = self.upsample(u3)
         u4 = self.concat4(u3, c2)
         u4 = self.convup4(u4)
         u4 = self.upsample(u4)
-        u5 = self.concat5(u4, c1)
+        u5 = self.concat5(u4)
         out = self.convup5(u5)
         return out
 
@@ -450,31 +450,32 @@ class CelebA_Decoder(nn.Module):
     def __init__(self):
         super().__init__()
         self.upsample = nn.Upsample(scale_factor=2)
-        self.concat1 = Concat(512, 128)
+        self.concat1 = CNNencoder(256, 128)
         self.convup1 = CNNencoder(128, 128)
         self.concat2 = Concat(256, 64)
         self.convup2 = CNNencoder(64, 64)
-        self.concat3 = Concat(128, 32)
+        self.concat3 = CNNencoder(64, 32)
         self.convup3 = CNNencoder(32, 32)
         self.concat4 = Concat(64, 16)
         self.convup4 = CNNencoder(16, 16)
-        self.concat5 = Concat(32, 3)
+        self.concat5 = CNNencoder(16, 3)
         self.convup5 = CNNencoder(3, 3)
-    def forward(self, x, c5, c4, c3, c2, c1):
-        v1 = self.upsample(x)
-        u1 = self.concat1(v1, c5)
+
+    def forward(self, x, c4, c2):
+        # v1 = self.upsample(x)
+        u1 = self.concat1(x)
         u1 = self.convup1(u1)
         u1 = self.upsample(u1)
         u2 = self.concat2(u1, c4)
         u2 = self.convup2(u2)
         u2 = self.upsample(u2)
-        u3 = self.concat3(u2, c3)
+        u3 = self.concat3(u2)
         u3 = self.convup3(u3)
         u3 = self.upsample(u3)
         u4 = self.concat4(u3, c2)
         u4 = self.convup4(u4)
         u4 = self.upsample(u4)
-        u5 = self.concat5(u4, c1)
+        u5 = self.concat5(u4)
         out = self.convup5(u5)
         return out
 

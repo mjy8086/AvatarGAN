@@ -355,8 +355,11 @@ class Cartoon_Encoder(nn.Module):
         c4 = self.conv4_1(p3)
         c4 = self.conv4_2(c4)
         p4 = self.pooling(c4)
+        # (B, 128, 16, 16)
         c5 = self.conv5_1(p4)
+        # (B, 256, 16, 16)
         out = self.conv5_2(c5)
+        # (B, 256, 16, 16)
         return out
 
 
@@ -428,8 +431,10 @@ class Cartoon_Decoder(nn.Module):
         self.concat5 = CNNencoder(16, 3)
         self.convup5 = CNNencoder(3, 3)
     def forward(self, x):
-        v1 = self.upsample(x)
-        u1 = self.concat1(v1)
+        # v1 = self.upsample(x)
+        # (B, 256, 16, 16)
+        u1 = self.concat1(x)
+        # (B, 128, 32, 32)
         u1 = self.convup1(u1)
         u1 = self.upsample(u1)
         u2 = self.concat2(u1)
@@ -441,8 +446,10 @@ class Cartoon_Decoder(nn.Module):
         u4 = self.concat4(u3)
         u4 = self.convup4(u4)
         u4 = self.upsample(u4)
+        # (B, 16, 256, 256)
         u5 = self.concat5(u4)
         out = self.convup5(u5)
+        # (B, 3, 256, 256)
         return out
 
 
@@ -461,8 +468,8 @@ class CelebA_Decoder(nn.Module):
         self.concat5 = CNNencoder(16, 3)
         self.convup5 = CNNencoder(3, 3)
     def forward(self, x):
-        v1 = self.upsample(x)
-        u1 = self.concat1(v1)
+        # v1 = self.upsample(x)
+        u1 = self.concat1(x)
         u1 = self.convup1(u1)
         u1 = self.upsample(u1)
         u2 = self.concat2(u1)
