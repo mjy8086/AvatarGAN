@@ -27,7 +27,7 @@ from pytorch_fid.inception import InceptionV3
 
 
 from tqdm import tqdm
-from model_test import *
+from model import *
 from utility import *
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "3"
