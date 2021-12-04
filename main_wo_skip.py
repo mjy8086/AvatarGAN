@@ -25,10 +25,10 @@ from scipy.ndimage.filters import gaussian_filter
 from scipy.stats import norm
 
 from tqdm import tqdm
-from model_wo_skip import *
+from model_batch_wo_skip import *
 from utility import *
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
 torch.cuda.empty_cache()
 
@@ -86,10 +86,10 @@ def main():
 
     ####### Optimizers
     optimizer_cartoon_G = torch.optim.Adam(list(Cartoon_Encoder.parameters()) + list(Bottleneck.parameters()) + list(Cartoon_Decoder.parameters()), lr=0.001, betas=(0.5, 0.999))
-    optimizer_cartoon_D = torch.optim.Adam(Cartoon_Discriminator.parameters(), lr=0.0002, betas=(0.5, 0.999))
+    optimizer_cartoon_D = torch.optim.Adam(Cartoon_Discriminator.parameters(), lr=0.001, betas=(0.5, 0.999))
 
     optimizer_celeba_G = torch.optim.Adam(list(CelebA_Encoder.parameters()) + list(Bottleneck.parameters()) + list(CelebA_Decoder.parameters()), lr=0.001, betas=(0.5, 0.999))
-    optimizer_celeba_D = torch.optim.Adam(CelebA_Discriminator.parameters(), lr=0.0002, betas=(0.5, 0.999))
+    optimizer_celeba_D = torch.optim.Adam(CelebA_Discriminator.parameters(), lr=0.001, betas=(0.5, 0.999))
 
 
     FloatTensor = torch.cuda.FloatTensor
@@ -270,7 +270,7 @@ def main():
         CelebA_Discriminator.eval()
 
         # create a folder for generated images
-        createFolder('/home/mjy/AvatarGAN/generated_img_wo_skip_lr/epoch_%d' % epoch)
+        createFolder('/home/mjy/AvatarGAN/generated_img_batchnorm_wd_skip/epoch_%d' % epoch)
 
         with torch.no_grad():
 
@@ -309,13 +309,13 @@ def main():
             plt.subplots_adjust(left=0, bottom=0, right=1, top=1, hspace=0, wspace=0)
 
             plt.imshow(out111)
-            plt.savefig('/home/mjy/AvatarGAN/generated_img_wo_skip_lr/epoch_%d/out1.png' % epoch, bbox_inches='tight',
+            plt.savefig('/home/mjy/AvatarGAN/generated_img_batchnorm_wd_skip/epoch_%d/out1.png' % epoch, bbox_inches='tight',
                         pad_inches=0)
             plt.imshow(out222)
-            plt.savefig('/home/mjy/AvatarGAN/generated_img_wo_skip_lr/epoch_%d/out2.png' % epoch, bbox_inches='tight',
+            plt.savefig('/home/mjy/AvatarGAN/generated_img_batchnorm_wd_skip/epoch_%d/out2.png' % epoch, bbox_inches='tight',
                         pad_inches=0)
             plt.imshow(out333)
-            plt.savefig('/home/mjy/AvatarGAN/generated_img_wo_skip_lr/epoch_%d/out3.png' % epoch, bbox_inches='tight',
+            plt.savefig('/home/mjy/AvatarGAN/generated_img_batchnorm_wd_skip/epoch_%d/out3.png' % epoch, bbox_inches='tight',
                         pad_inches=0)
 
         Cartoon_Encoder.train()
@@ -326,15 +326,15 @@ def main():
         Cartoon_Discriminator.train()
         CelebA_Discriminator.train()
 
-        if epoch % 10 == 0:
+        if epoch % 20 == 0:
 
-            torch.save(Cartoon_Encoder.state_dict(), '/home/mjy/AvatarGAN/generated_img_wo_skip_lr/epoch_%d/Cartoon_Encoder.pth' % epoch)
-            torch.save(CelebA_Encoder.state_dict(), '/home/mjy/AvatarGAN/generated_img_wo_skip_lr/epoch_%d/CelebA_Encoder.pth' % epoch)
-            torch.save(Bottleneck.state_dict(), '/home/mjy/AvatarGAN/generated_img_wo_skip_lr/epoch_%d/Bottleneck.pth' % epoch)
-            torch.save(Cartoon_Decoder.state_dict(), '/home/mjy/AvatarGAN/generated_img_wo_skip_lr/epoch_%d/Cartoon_Decoder.pth' % epoch)
-            torch.save(CelebA_Decoder.state_dict(), '/home/mjy/AvatarGAN/generated_img_wo_skip_lr/epoch_%d/CelebA_Decoder.pth' % epoch)
-            torch.save(Cartoon_Discriminator.state_dict(), '/home/mjy/AvatarGAN/generated_img_wo_skip_lr/epoch_%d/Cartoon_Discriminator.pth' % epoch)
-            torch.save(CelebA_Discriminator.state_dict(), '/home/mjy/AvatarGAN/generated_img_wo_skip_lr/epoch_%d/CelebA_Discriminator.pth' % epoch)
+            torch.save(Cartoon_Encoder.state_dict(), '/home/mjy/AvatarGAN/generated_img_batchnorm_wd_skip/epoch_%d/Cartoon_Encoder.pth' % epoch)
+            torch.save(CelebA_Encoder.state_dict(), '/home/mjy/AvatarGAN/generated_img_batchnorm_wd_skip/epoch_%d/CelebA_Encoder.pth' % epoch)
+            torch.save(Bottleneck.state_dict(), '/home/mjy/AvatarGAN/generated_img_batchnorm_wd_skip/epoch_%d/Bottleneck.pth' % epoch)
+            torch.save(Cartoon_Decoder.state_dict(), '/home/mjy/AvatarGAN/generated_img_batchnorm_wd_skip/epoch_%d/Cartoon_Decoder.pth' % epoch)
+            torch.save(CelebA_Decoder.state_dict(), '/home/mjy/AvatarGAN/generated_img_batchnorm_wd_skip/epoch_%d/CelebA_Decoder.pth' % epoch)
+            torch.save(Cartoon_Discriminator.state_dict(), '/home/mjy/AvatarGAN/generated_img_batchnorm_wd_skip/epoch_%d/Cartoon_Discriminator.pth' % epoch)
+            torch.save(CelebA_Discriminator.state_dict(), '/home/mjy/AvatarGAN/generated_img_batchnorm_wd_skip/epoch_%d/CelebA_Discriminator.pth' % epoch)
 
 
 if __name__ == '__main__':
